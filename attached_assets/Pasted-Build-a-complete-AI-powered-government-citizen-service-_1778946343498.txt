@@ -1,0 +1,214 @@
+Build a complete AI-powered government citizen service portal web application using Next.js, React, Tailwind CSS, Supabase, and Gemini API.
+
+PROJECT GOAL:
+Create a secure citizen portal where users can log in and request updates to personal details like mobile number, email address, and residential address. The system should use a RAG-based AI assistant to guide users using retrieved government policy documents and workflows.
+
+TECH STACK:
+
+- Frontend: Next.js + React + Tailwind CSS
+- Backend: Node.js API routes
+- Database: Supabase PostgreSQL
+- Authentication: Supabase Auth
+- Vector Database: pgvector in Supabase
+- AI Model: Gemini API
+- RAG Framework: LangChain
+- Deployment-ready structure
+
+MAIN FEATURES:
+
+1. AUTHENTICATION
+
+- Citizen signup/login
+- Secure authentication using Supabase
+- Session management
+- Forgot password
+- Logout system
+
+2. CITIZEN DASHBOARD
+
+- Display citizen profile information
+- Show:
+  - Full name
+  - Aadhaar number (masked)
+  - Mobile number
+  - Email address
+  - Address
+- Clean modern UI
+- Responsive design
+
+3. AI CHATBOT ASSISTANT
+
+- ChatGPT-like interface
+- Floating chatbot panel
+- User can ask:
+  - “How do I change my mobile number?”
+  - “What documents are required?”
+  - “What is the verification process?”
+- AI must answer ONLY from retrieved policy documents
+- Use RAG architecture
+- Show retrieved document references
+- Prevent hallucinations
+- If no information found, respond:
+  “Official information could not be retrieved.”
+
+4. RAG IMPLEMENTATION
+
+- Create document ingestion pipeline
+- Split policy documents into chunks
+- Generate embeddings
+- Store embeddings in Supabase pgvector
+- Retrieve top relevant chunks
+- Pass retrieved context to Gemini API
+- Include source references in responses
+
+5. PROFILE UPDATE REQUEST SYSTEM
+   Allow citizens to request updates for:
+
+- Mobile number
+- Email address
+- Residential address
+
+Workflow:
+
+- User submits request
+- System stores request in database
+- AI assistant explains required verification steps
+- Request enters pending approval state
+
+6. OTP VERIFICATION
+
+- OTP verification for mobile number updates
+- Email verification for email updates
+- Validation checks
+- Confirmation dialogs before submission
+
+7. ADMIN DASHBOARD
+   Admin features:
+
+- View all update requests
+- Approve/reject requests
+- Search citizens
+- View audit logs
+- View request timestamps
+- View old value and new value
+- Filter requests by status
+
+8. AUDIT LOGGING
+   Track:
+
+- Who requested update
+- What was changed
+- Timestamp
+- Approval/rejection status
+- Admin actions
+
+9. SECURITY FEATURES
+
+- Role-based access:
+  - citizen
+  - admin
+- Input validation
+- API protection
+- Secure environment variables
+- Rate limiting placeholders
+- Secure backend architecture
+
+10. DATABASE TABLES
+
+Users Table:
+
+- id
+- full_name
+- aadhaar_number
+- mobile_number
+- email
+- address
+- role
+
+UpdateRequests Table:
+
+- id
+- user_id
+- field_name
+- old_value
+- new_value
+- status
+- timestamp
+
+AuditLogs Table:
+
+- id
+- action
+- user_id
+- admin_id
+- timestamp
+
+KnowledgeBase Table:
+
+- id
+- document_text
+- embedding
+- source_name
+
+11. UI REQUIREMENTS
+
+- Modern government-style interface
+- Professional clean layout
+- Mobile responsive
+- Dark/light mode toggle
+- Sidebar navigation
+- Dashboard cards
+- Notification system
+- Loading animations
+
+12. API STRUCTURE
+    Generate organized backend APIs for:
+
+- authentication
+- chatbot
+- RAG retrieval
+- profile updates
+- admin approval
+- audit logs
+
+13. FILE STRUCTURE
+    Generate clean scalable folder structure:
+
+- components
+- pages/app
+- lib
+- services
+- api
+- hooks
+- utils
+- database
+
+14. DEPLOYMENT
+
+- Generate deployment-ready code
+- Environment variable setup
+- README instructions
+- Supabase setup instructions
+- Gemini API setup instructions
+
+15. SAMPLE DATA
+    Add demo users and sample government policy documents for testing RAG.
+
+16. AI ASSISTANT RULES
+    The chatbot must:
+
+- Never invent government rules
+- Only answer from retrieved documents
+- Always prioritize security
+- Ask confirmation before updates
+- Be concise and professional
+
+17. EXTRA FEATURES
+
+- Search functionality
+- Toast notifications
+- Error handling
+- Form validation
+- Responsive mobile layout
+
+Generate the complete production-ready project with all frontend pages, backend APIs, database schema, RAG pipeline, and setup instructions.

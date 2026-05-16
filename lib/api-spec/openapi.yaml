@@ -3,13 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI-Powered Government Citizen Service Portal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profile
+    description: Citizen profile operations
+  - name: requests
+    description: Profile update request operations
+  - name: admin
+    description: Admin operations
+  - name: audit
+    description: Audit log operations
+  - name: chatbot
+    description: AI chatbot (RAG) operations
+  - name: otp
+    description: OTP verification operations
 paths:
   /healthz:
     get:
@@ -24,6 +36,483 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /profile/me:
+    get:
+      operationId: getMyProfile
+      tags: [profile]
+      summary: Get current citizen profile
+      responses:
+        "200":
+          description: Citizen profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitizenProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /profile/me/sync:
+    post:
+      operationId: syncMyProfile
+      tags: [profile]
+      summary: Sync/upsert citizen profile from auth provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileSync"
+      responses:
+        "200":
+          description: Synced citizen profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitizenProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /requests:
+    get:
+      operationId: listMyRequests
+      tags: [requests]
+      summary: List current citizen's update requests
+      responses:
+        "200":
+          description: List of update requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UpdateRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    post:
+      operationId: createRequest
+      tags: [requests]
+      summary: Submit a new profile update request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRequestInput"
+      responses:
+        "201":
+          description: Created update request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRequest"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /requests/{id}:
+    get:
+      operationId: getRequest
+      tags: [requests]
+      summary: Get a specific update request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Update request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRequest"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /requests/{id}/cancel:
+    post:
+      operationId: cancelRequest
+      tags: [requests]
+      summary: Cancel a pending update request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRequest"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /otp/send:
+    post:
+      operationId: sendOtp
+      tags: [otp]
+      summary: Send OTP for verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpSendInput"
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpSendResult"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /otp/verify:
+    post:
+      operationId: verifyOtp
+      tags: [otp]
+      summary: Verify OTP code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyInput"
+      responses:
+        "200":
+          description: OTP verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpVerifyResult"
+        "400":
+          description: Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /admin/requests:
+    get:
+      operationId: adminListRequests
+      tags: [admin]
+      summary: List all citizen update requests (admin only)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, approved, rejected, cancelled]
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated list of update requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminRequestsPage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /admin/requests/{id}/approve:
+    post:
+      operationId: adminApproveRequest
+      tags: [admin]
+      summary: Approve an update request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminDecisionInput"
+      responses:
+        "200":
+          description: Approved request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRequest"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /admin/requests/{id}/reject:
+    post:
+      operationId: adminRejectRequest
+      tags: [admin]
+      summary: Reject an update request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminDecisionInput"
+      responses:
+        "200":
+          description: Rejected request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRequest"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /admin/citizens:
+    get:
+      operationId: adminListCitizens
+      tags: [admin]
+      summary: List all citizens (admin only)
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated list of citizens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCitizensPage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Get admin dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit logs (admin only)
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogsPage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /chatbot/ask:
+    post:
+      operationId: chatbotAsk
+      tags: [chatbot]
+      summary: Ask the AI chatbot a question (RAG-based)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatbotQuestion"
+      responses:
+        "200":
+          description: AI answer with source references
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatbotAnswer"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /chatbot/history:
+    get:
+      operationId: getChatHistory
+      tags: [chatbot]
+      summary: Get chatbot conversation history for current user
+      responses:
+        "200":
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: clearChatHistory
+      tags: [chatbot]
+      summary: Clear chatbot conversation history for current user
+      responses:
+        "204":
+          description: History cleared
+
+  /dashboard/stats:
+    get:
+      operationId: getCitizenDashboardStats
+      tags: [profile]
+      summary: Get citizen dashboard stats (request counts by status)
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitizenDashboardStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +523,362 @@ components:
       required:
         - status
 
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    CitizenProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: string
+        fullName:
+          type: string
+        aadhaarNumber:
+          type: string
+        mobileNumber:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [citizen, admin]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clerkUserId
+        - fullName
+        - aadhaarNumber
+        - role
+        - createdAt
+        - updatedAt
+
+    ProfileSync:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: ["string", "null"]
+      required:
+        - fullName
+
+    UpdateRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        citizenName:
+          type: ["string", "null"]
+        fieldName:
+          type: string
+          enum: [mobile_number, email, address]
+        oldValue:
+          type: ["string", "null"]
+        newValue:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected, cancelled]
+        adminNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - fieldName
+        - newValue
+        - status
+        - createdAt
+        - updatedAt
+
+    UpdateRequestInput:
+      type: object
+      properties:
+        fieldName:
+          type: string
+          enum: [mobile_number, email, address]
+        newValue:
+          type: string
+          minLength: 1
+        otpToken:
+          type: ["string", "null"]
+      required:
+        - fieldName
+        - newValue
+
+    AdminDecisionInput:
+      type: object
+      properties:
+        adminNote:
+          type: ["string", "null"]
+
+    AdminRequestsPage:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateRequest"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - requests
+        - total
+        - page
+        - limit
+
+    AdminCitizensPage:
+      type: object
+      properties:
+        citizens:
+          type: array
+          items:
+            $ref: "#/components/schemas/CitizenProfile"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - citizens
+        - total
+        - page
+        - limit
+
+    AdminStats:
+      type: object
+      properties:
+        totalCitizens:
+          type: integer
+        pendingRequests:
+          type: integer
+        approvedRequests:
+          type: integer
+        rejectedRequests:
+          type: integer
+        totalRequests:
+          type: integer
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateRequest"
+      required:
+        - totalCitizens
+        - pendingRequests
+        - approvedRequests
+        - rejectedRequests
+        - totalRequests
+        - recentActivity
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+        userId:
+          type: ["integer", "null"]
+        adminId:
+          type: ["string", "null"]
+        targetField:
+          type: ["string", "null"]
+        oldValue:
+          type: ["string", "null"]
+        newValue:
+          type: ["string", "null"]
+        details:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - action
+        - createdAt
+
+    AuditLogsPage:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - logs
+        - total
+        - page
+        - limit
+
+    OtpSendInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [mobile, email]
+        value:
+          type: string
+      required:
+        - type
+        - value
+
+    OtpSendResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        expiresIn:
+          type: integer
+      required:
+        - success
+        - message
+        - expiresIn
+
+    OtpVerifyInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [mobile, email]
+        value:
+          type: string
+        code:
+          type: string
+      required:
+        - type
+        - value
+        - code
+
+    OtpVerifyResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        token:
+          type: ["string", "null"]
+        message:
+          type: string
+      required:
+        - valid
+        - message
+
+    ChatbotQuestion:
+      type: object
+      properties:
+        question:
+          type: string
+          minLength: 1
+        conversationId:
+          type: ["string", "null"]
+      required:
+        - question
+
+    ChatbotAnswer:
+      type: object
+      properties:
+        answer:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentSource"
+        conversationId:
+          type: string
+        retrievedCount:
+          type: integer
+      required:
+        - answer
+        - sources
+        - conversationId
+        - retrievedCount
+
+    DocumentSource:
+      type: object
+      properties:
+        sourceName:
+          type: string
+        excerpt:
+          type: string
+      required:
+        - sourceName
+        - excerpt
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentSource"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - role
+        - content
+        - sources
+        - createdAt
+
+    CitizenDashboardStats:
+      type: object
+      properties:
+        totalRequests:
+          type: integer
+        pendingRequests:
+          type: integer
+        approvedRequests:
+          type: integer
+        rejectedRequests:
+          type: integer
+        recentRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateRequest"
+      required:
+        - totalRequests
+        - pendingRequests
+        - approvedRequests
+        - rejectedRequests
+        - recentRequests
